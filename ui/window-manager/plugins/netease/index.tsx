@@ -113,36 +113,24 @@ const AccountInfo = ({ state, nickname, avatar, vip }: {
 )
 
 // ---- QR Section ----
-const QRSection = ({ qr, status, state }: {
-    qr: string; status: string; state: string
+const QRSection = ({ status, state }: {
+    status: string; state: string
 }) => (
     <div style={{
         display: "Flex", flexDirection: "Column", alignItems: "Center",
         marginTop: 6, marginBottom: 6,
     }}>
-        {qr ? (
-            <img
-                src={"data:image/png;base64," + qr}
-                style={{
-                    width: 140, height: 140, borderRadius: 8,
-                    marginBottom: 8, backgroundColor: "#fff",
-                }}
-            />
-        ) : (
-            <div style={{
-                width: 140, height: 140, borderRadius: 8,
-                marginBottom: 8, backgroundColor: "rgba(255,255,255,0.04)",
-                display: "Flex", justifyContent: "Center", alignItems: "Center",
-                fontSize: 12, color: DIM,
-            }}>
-                等待二维码...
+        <div style={{
+            backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 8,
+            padding: 16, marginBottom: 8,
+        }}>
+            <div style={{ fontSize: 12, color: TEXT, unityTextAlign: "MiddleCenter", marginBottom: 4 }}>
+                {status || "请在播放列表中点击「网易云扫码登录」"}
             </div>
-        )}
-        {status ? (
-            <div style={{ fontSize: 11, color: DIM, unityTextAlign: "MiddleCenter" }}>
-                {status}
+            <div style={{ fontSize: 10, color: DIM, unityTextAlign: "MiddleCenter" }}>
+                二维码将显示在封面区域
             </div>
-        ) : null}
+        </div>
     </div>
 )
 
@@ -192,7 +180,6 @@ const NeteaseMain = () => {
     const [avatar, setAvatar] = useState("")
     const [vip, setVip] = useState(0)
     const [status, setStatus] = useState("")
-    const [qr, setQr] = useState("")
 
     // Poll API every 500ms
     useEffect(() => {
@@ -204,7 +191,6 @@ const NeteaseMain = () => {
             setAvatar(api.avatarUrl || "")
             setVip(api.vipType || 0)
             setStatus(api.statusMessage || "")
-            setQr(api.qrCodeBase64 || "")
         }
         const timer = setInterval(poll, 500)
         poll()
@@ -213,7 +199,7 @@ const NeteaseMain = () => {
 
     const api = getApi()
     const noApi = !api
-    const showQR = state === "logged_out" || state === "expired" || state === "logging_in"
+    const showLogin = state === "logged_out" || state === "expired" || state === "logging_in"
 
     return (
         <div style={{ flexGrow: 1, display: "Flex", flexDirection: "Column", backgroundColor: BG, padding: 16 }}>
@@ -234,10 +220,10 @@ const NeteaseMain = () => {
                     <SectionTitle text="账号" />
                     <AccountInfo state={state} nickname={nickname} avatar={avatar} vip={vip} />
 
-                    {showQR && (
+                    {showLogin && (
                         <div>
                             <SectionTitle text="扫码登录" />
-                            <QRSection qr={qr} status={status} state={state} />
+                            <QRSection status={status} state={state} />
                         </div>
                     )}
 
