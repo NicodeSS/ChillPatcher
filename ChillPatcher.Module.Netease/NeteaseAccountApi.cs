@@ -34,13 +34,19 @@ namespace ChillPatcher.Module.Netease
         {
             _qrLoginManager = qrLoginManager;
             _qrLoginManager.OnStatusChanged += msg => _statusMessage = msg ?? "";
-            _qrLoginManager.OnQRCodeUpdated += _ =>
-            {
-                var bytes = _qrLoginManager.QRCodeBytes;
-                _qrCodeBase64 = bytes != null && bytes.Length > 0
-                    ? Convert.ToBase64String(bytes)
-                    : "";
-            };
+            _qrLoginManager.OnQRCodeUpdated += _ => SyncQRCode();
+
+            // 主动同步一次当前状态（QR 可能在绑定前已生成）
+            SyncQRCode();
+        }
+
+        private void SyncQRCode()
+        {
+            if (_qrLoginManager == null) return;
+            var bytes = _qrLoginManager.QRCodeBytes;
+            _qrCodeBase64 = bytes != null && bytes.Length > 0
+                ? Convert.ToBase64String(bytes)
+                : "";
         }
 
         #region Properties (read by JS UI via polling)
