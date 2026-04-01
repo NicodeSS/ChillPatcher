@@ -155,7 +155,7 @@ const ActionButtons = ({ state }: { state: string }) => {
                 <div>
                     <div style={{ display: "Flex", flexDirection: "Row", justifyContent: "SpaceBetween" }}>
                         <ActionButton text="刷新登录态" onClick={() => api.refreshLogin()} />
-                        <ActionButton text="登出（重启生效）" onClick={() => api.logout()} />
+                        <ActionButton text="登出" onClick={() => api.logout()} />
                     </div>
                 </div>
             )
