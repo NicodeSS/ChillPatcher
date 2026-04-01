@@ -102,14 +102,16 @@ namespace ChillPatcher
                 foreach (var dir in Directory.GetDirectories(uiBaseDir))
                 {
                     var dirName = Path.GetFileName(dir);
+                    // 使用 uiBaseDir + dirName 构造路径，避免 Directory.GetDirectories 解析 NTFS junction
+                    var dirPath = Path.Combine(uiBaseDir, dirName);
 
                     // 跳过没有入口文件或 package.json 的目录
-                    var hasEntry = File.Exists(Path.Combine(dir, "@outputs", "esbuild", "app.js"));
-                    var hasPkg = File.Exists(Path.Combine(dir, "package.json"));
+                    var hasEntry = File.Exists(Path.Combine(dirPath, "@outputs", "esbuild", "app.js"));
+                    var hasPkg = File.Exists(Path.Combine(dirPath, "package.json"));
                     if (!hasEntry && !hasPkg) continue;
 
                     var isDefault = dirName == "default";
-                    var entry = BindInstance(dirName, dir,
+                    var entry = BindInstance(dirName, dirPath,
                         defaultSortingOrder: isDefault ? 1000 : nextOrder,
                         defaultEnabled: true,
                         defaultInteractive: true);
