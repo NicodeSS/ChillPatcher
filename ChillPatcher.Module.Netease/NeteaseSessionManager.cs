@@ -174,7 +174,7 @@ namespace ChillPatcher.Module.Netease
             var result = _bridge.Logout();
             UserInfo = null;
             RecoveredSongUrl = null;
-            SetState(SessionState.LoggedOut);
+            SetState(SessionState.Expired);
             _logger.LogInfo($"[NeteaseSession] Logout completed: {(result ? "success" : "failed")}");
         }
 
