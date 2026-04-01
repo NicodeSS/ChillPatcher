@@ -92,44 +92,15 @@ const AccountInfo = ({ state, nickname, avatar, vip }: {
 }) => (
     <div style={{
         backgroundColor: CARD, borderRadius: 8, padding: 12, marginBottom: 10,
-        display: "Flex", flexDirection: "Row", alignItems: "Center",
     }}>
-        {state === "logged_in" && avatar ? (
-            <img
-                src={avatar}
-                style={{
-                    width: 36, height: 36, borderRadius: 18,
-                    marginRight: 10, objectFit: "cover",
-                }}
-            />
-        ) : (
-            <div style={{
-                width: 36, height: 36, borderRadius: 18,
-                marginRight: 10, backgroundColor: "rgba(255,255,255,0.06)",
-                display: "Flex", justifyContent: "Center", alignItems: "Center",
-                fontSize: 16, color: DIM,
-            }}>
-                ♫
-            </div>
-        )}
-        <div style={{ flexGrow: 1 }}>
-            <div style={{ display: "Flex", flexDirection: "Row", alignItems: "Center" }}>
-                <div style={{
-                    width: 8, height: 8, borderRadius: 4,
-                    backgroundColor: statusDotColor(state),
-                    marginRight: 6,
-                }} />
-                <div style={{ fontSize: 13, color: TEXT }}>
-                    {state === "logged_in" ? (nickname || "网易云用户") : statusLabel(state)}
-                </div>
-            </div>
-            <div style={{
-                fontSize: 10,
-                color: state === "logged_in" ? vipColor(vip) : DIM,
-                marginTop: 2,
-            }}>
-                {state === "logged_in" ? vipLabel(vip) : statusLabel(state)}
-            </div>
+        <div style={{ fontSize: 13, color: TEXT, marginBottom: 2 }}>
+            {state === "logged_in" ? (nickname || "网易云用户") : statusLabel(state)}
+        </div>
+        <div style={{
+            fontSize: 10,
+            color: state === "logged_in" ? vipColor(vip) : DIM,
+        }}>
+            {state === "logged_in" ? vipLabel(vip) : statusLabel(state)}
         </div>
     </div>
 )
@@ -285,7 +256,7 @@ __registerPlugin({
     initialX: 260,
     initialY: 140,
     launcher: {
-        text: "",
+        text: "󰎆",
         background: "#e7515a",
     },
     component: NeteaseMain,
