@@ -73,7 +73,7 @@ namespace ChillPatcher.Module.Netease
                 case NeteaseBridge.RefreshLoginResult.Success:
                     UpdateUserInfo();
                     SetState(SessionState.LoggedIn);
-                    _logger.LogInfo($"[NeteaseSession] Session valid. User: {UserInfo?.Nickname}");
+                    _logger.LogInfo($"[NeteaseSession] Session valid. User: {UserInfo?.Nickname}, VipType: {UserInfo?.VipType}");
                     return true;
 
                 case NeteaseBridge.RefreshLoginResult.AuthFailed:

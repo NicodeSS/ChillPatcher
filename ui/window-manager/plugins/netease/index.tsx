@@ -22,15 +22,14 @@ function getApi(): any {
 
 // ---- VIP helpers ----
 function vipLabel(vipType: number): string {
-    // 网易云 vipType: 0=免费, 10=普通VIP, 11=黑胶VIP, 其他>0=VIP
     if (vipType === 11) return "黑胶VIP"
-    if (vipType === 10) return "VIP"
-    if (vipType > 0) return "黑胶VIP"  // 大部分付费用户是黑胶
+    if (vipType > 0) return `VIP (${vipType})`
     return "免费用户"
 }
 
 function vipColor(vipType: number): string {
-    if (vipType > 0) return NETEASE_RED  // 所有付费用户用网易红
+    if (vipType === 11) return NETEASE_RED
+    if (vipType > 0) return ACCENT
     return DIM
 }
 
