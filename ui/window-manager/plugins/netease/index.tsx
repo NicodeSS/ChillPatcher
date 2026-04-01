@@ -121,7 +121,7 @@ const QRSection = ({ status, state }: {
         marginTop: 6, marginBottom: 6,
     }}>
         <div style={{
-            backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 8,
+            backgroundColor: CARD, borderRadius: 8,
             padding: 16, marginBottom: 8,
         }}>
             <div style={{ fontSize: 12, color: TEXT, unityTextAlign: "MiddleCenter", marginBottom: 4 }}>
