@@ -112,8 +112,8 @@ const AccountInfo = ({ state, nickname, avatar, vip }: {
     </div>
 )
 
-// ---- QR Section ----
-const QRSection = ({ status, state }: {
+// ---- Login Guide Section ----
+const LoginGuide = ({ status, state }: {
     status: string; state: string
 }) => (
     <div style={{
@@ -124,11 +124,15 @@ const QRSection = ({ status, state }: {
             backgroundColor: CARD, borderRadius: 8,
             padding: 16, marginBottom: 8,
         }}>
-            <div style={{ fontSize: 12, color: TEXT, unityTextAlign: "MiddleCenter", marginBottom: 4 }}>
-                {status || "请在播放列表中点击「网易云扫码登录」"}
+            <div style={{ fontSize: 12, color: TEXT, unityTextAlign: "MiddleCenter", marginBottom: 6 }}>
+                {status === "等待扫码"
+                    ? "请用网易云 APP 扫描封面区域的二维码"
+                    : "请在播放列表中点击「网易云扫码登录」"}
             </div>
             <div style={{ fontSize: 10, color: DIM, unityTextAlign: "MiddleCenter" }}>
-                二维码将显示在封面区域
+                {status === "等待扫码"
+                    ? "扫码后在手机上确认登录"
+                    : "二维码将显示在封面区域"}
             </div>
         </div>
     </div>
@@ -150,24 +154,9 @@ const ActionButtons = ({ state }: { state: string }) => {
                 </div>
             )
         case "logged_out":
-            return (
-                <div style={{ display: "Flex", flexDirection: "Row", justifyContent: "Center" }}>
-                    <ActionButton text="登录" onClick={() => api.login()} primary />
-                </div>
-            )
         case "expired":
-            return (
-                <div style={{ display: "Flex", flexDirection: "Row", justifyContent: "SpaceBetween" }}>
-                    <ActionButton text="重新登录" onClick={() => api.login()} primary />
-                    <ActionButton text="登出" onClick={() => api.logout()} />
-                </div>
-            )
         case "logging_in":
-            return (
-                <div style={{ display: "Flex", flexDirection: "Row", justifyContent: "Center" }}>
-                    <ActionButton text="扫码中..." onClick={() => {}} disabled />
-                </div>
-            )
+            return null
         default:
             return null
     }
@@ -223,7 +212,7 @@ const NeteaseMain = () => {
                     {showLogin && (
                         <div>
                             <SectionTitle text="扫码登录" />
-                            <QRSection status={status} state={state} />
+                            <LoginGuide status={status} state={state} />
                         </div>
                     )}
 
