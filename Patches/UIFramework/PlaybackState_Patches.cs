@@ -134,6 +134,10 @@ namespace ChillPatcher.Patches.UIFramework
                     // 没有保存的歌曲，结束恢复
                     PlaybackStateManager.Instance.EndRestore();
                 }
+
+                // 无论是否恢复了歌曲，都同步播放模式按钮的视觉状态
+                await Cysharp.Threading.Tasks.UniTask.DelayFrame(2);
+                SyncPlayModeButtons(facility, musicService);
             }
             catch (Exception ex)
             {
@@ -164,6 +168,7 @@ namespace ChillPatcher.Patches.UIFramework
                 {
                     musicUI.OnPlayMusic();
                     Plugin.Log.LogInfo("[PlaybackState] Called MusicUI.OnPlayMusic() to update UI");
+
                 }
                 else
                 {
@@ -173,6 +178,28 @@ namespace ChillPatcher.Patches.UIFramework
             catch (Exception ex)
             {
                 Plugin.Log.LogError($"[PlaybackState] Error updating play state: {ex.Message}");
+            }
+        }
+        /// <summary>
+        /// 同步播放模式按钮（shuffle/loop）的视觉状态与实际状态
+        /// </summary>
+        private static void SyncPlayModeButtons(FacilityMusic facility, MusicService musicService)
+        {
+            try
+            {
+                if (facility == null || musicService == null) return;
+
+                var musicUI = facility._musicListUI as MusicUI;
+                if (musicUI != null)
+                {
+                    musicUI.OnChangeShuffle(musicService.IsShuffle);
+                    musicUI.OnChangeLoop(musicService.IsRepeatOneMusic);
+                    Plugin.Log.LogInfo($"[PlaybackState] Synced button states: shuffle={musicService.IsShuffle}, loop={musicService.IsRepeatOneMusic}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.LogError($"[PlaybackState] Error syncing play mode buttons: {ex.Message}");
             }
         }
     }
