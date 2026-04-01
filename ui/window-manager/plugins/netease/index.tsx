@@ -22,13 +22,14 @@ function getApi(): any {
 
 // ---- VIP helpers ----
 function vipLabel(vipType: number): string {
-    if (vipType === 11) return "黑胶VIP"
-    if (vipType > 0) return `VIP (${vipType})`
+    // 已知值: 0=免费, 11=黑胶VIP, 110=黑胶VIP (新体系)
+    if (vipType === 11 || vipType === 110) return "黑胶VIP"
+    if (vipType > 0) return "VIP"
     return "免费用户"
 }
 
 function vipColor(vipType: number): string {
-    if (vipType === 11) return NETEASE_RED
+    if (vipType === 11 || vipType === 110) return NETEASE_RED
     if (vipType > 0) return ACCENT
     return DIM
 }
