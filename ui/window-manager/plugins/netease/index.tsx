@@ -125,12 +125,16 @@ const LoginGuide = ({ status, state }: {
             padding: 16, marginBottom: 8,
         }}>
             <div style={{ fontSize: 12, color: TEXT, unityTextAlign: "MiddleCenter", marginBottom: 6 }}>
-                {status === "等待扫码"
+                {state === "expired"
+                    ? "登录已过期，请重启游戏重新登录"
+                    : status === "等待扫码"
                     ? "请用网易云 APP 扫描封面区域的二维码"
                     : "请在播放列表中点击「网易云扫码登录」"}
             </div>
             <div style={{ fontSize: 10, color: DIM, unityTextAlign: "MiddleCenter" }}>
-                {status === "等待扫码"
+                {state === "expired"
+                    ? "登出后需重启游戏才能重新登录"
+                    : status === "等待扫码"
                     ? "扫码后在手机上确认登录"
                     : "二维码将显示在封面区域"}
             </div>
@@ -148,9 +152,11 @@ const ActionButtons = ({ state }: { state: string }) => {
     switch (state) {
         case "logged_in":
             return (
-                <div style={{ display: "Flex", flexDirection: "Row", justifyContent: "SpaceBetween" }}>
-                    <ActionButton text="刷新登录态" onClick={() => api.refreshLogin()} />
-                    <ActionButton text="登出" onClick={() => api.logout()} />
+                <div>
+                    <div style={{ display: "Flex", flexDirection: "Row", justifyContent: "SpaceBetween" }}>
+                        <ActionButton text="刷新登录态" onClick={() => api.refreshLogin()} />
+                        <ActionButton text="登出（重启生效）" onClick={() => api.logout()} />
+                    </div>
                 </div>
             )
         case "logged_out":
@@ -211,7 +217,7 @@ const NeteaseMain = () => {
 
                     {showLogin && (
                         <div>
-                            <SectionTitle text="扫码登录" />
+                            <SectionTitle text="登录" />
                             <LoginGuide status={status} state={state} />
                         </div>
                     )}
