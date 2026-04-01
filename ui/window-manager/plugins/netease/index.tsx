@@ -74,7 +74,7 @@ const ActionButton = ({ text, onClick, primary = false, disabled = false }: {
             backgroundColor: disabled ? "rgba(255,255,255,0.04)" : (primary ? NETEASE_RED : "rgba(255,255,255,0.06)"),
             paddingTop: 7, paddingBottom: 7,
             paddingLeft: 16, paddingRight: 16,
-            borderRadius: 6,
+            borderRadius: 6, flexGrow: 1, marginLeft: 4, marginRight: 4,
             unityTextAlign: "MiddleCenter",
         }}
     >
