@@ -178,8 +178,10 @@ namespace ChillPatcher
                 _log.LogInfo($"[UIInstanceConfig] 已覆盖默认值: UIInstance.{id} (sortOrder={defaultSortingOrder}, interactive={defaultInteractive})");
             }
 
-            // 从 config 读取实际值
-            entry.WorkingDir = entry.CfgWorkingDir.Value;
+            // WorkingDir 始终使用运行时检测的路径，不从 config 缓存读取
+            // 避免 NTFS junction 解析后的旧路径被持久化导致 IO 沙箱路径不匹配
+            entry.CfgWorkingDir.Value = workingDir;
+            entry.WorkingDir = workingDir;
             entry.Enabled = entry.CfgEnabled.Value;
             entry.SortingOrder = entry.CfgSortingOrder.Value;
             entry.Interactive = entry.CfgInteractive.Value;
