@@ -22,14 +22,15 @@ function getApi(): any {
 
 // ---- VIP helpers ----
 function vipLabel(vipType: number): string {
+    // 网易云 vipType: 0=免费, 10=普通VIP, 11=黑胶VIP, 其他>0=VIP
     if (vipType === 11) return "黑胶VIP"
-    if (vipType > 0) return "VIP"
+    if (vipType === 10) return "VIP"
+    if (vipType > 0) return "黑胶VIP"  // 大部分付费用户是黑胶
     return "免费用户"
 }
 
 function vipColor(vipType: number): string {
-    if (vipType === 11) return NETEASE_RED
-    if (vipType > 0) return ACCENT
+    if (vipType > 0) return NETEASE_RED  // 所有付费用户用网易红
     return DIM
 }
 
@@ -92,13 +93,24 @@ const AccountInfo = ({ state, nickname, avatar, vip }: {
 }) => (
     <div style={{
         backgroundColor: CARD, borderRadius: 8, padding: 12, marginBottom: 10,
+        display: "Flex", flexDirection: "Column", alignItems: "Center",
     }}>
-        <div style={{ fontSize: 13, color: TEXT, marginBottom: 2 }}>
+        {state === "logged_in" && avatar ? (
+            <img
+                src={avatar}
+                style={{
+                    width: 48, height: 48, borderRadius: 24,
+                    marginBottom: 8,
+                }}
+            />
+        ) : null}
+        <div style={{ fontSize: 13, color: TEXT, marginBottom: 2, unityTextAlign: "MiddleCenter" }}>
             {state === "logged_in" ? (nickname || "网易云用户") : statusLabel(state)}
         </div>
         <div style={{
             fontSize: 10,
             color: state === "logged_in" ? vipColor(vip) : DIM,
+            unityTextAlign: "MiddleCenter",
         }}>
             {state === "logged_in" ? vipLabel(vip) : statusLabel(state)}
         </div>
@@ -212,7 +224,7 @@ const NeteaseMain = () => {
         <div style={{ flexGrow: 1, display: "Flex", flexDirection: "Column", backgroundColor: BG, padding: 16 }}>
             {/* Header */}
             <div style={{ display: "Flex", flexDirection: "Row", alignItems: "Center", marginBottom: 12 }}>
-                <div style={{ fontSize: 22, color: NETEASE_RED, marginRight: 8 }}>♫</div>
+                <div style={{ fontSize: 22, color: NETEASE_RED, marginRight: 8 }}>󰎆</div>
                 <div style={{ fontSize: 15, color: TEXT, unityFontStyleAndWeight: "Bold" }}>网易云音乐</div>
             </div>
 
