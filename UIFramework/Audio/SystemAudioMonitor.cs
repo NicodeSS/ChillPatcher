@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NAudio.CoreAudioApi;
@@ -43,6 +46,7 @@ namespace ChillPatcher.UIFramework.Audio
 
         // 进程ID（用于排除自己）
         private readonly int _currentProcessId;
+        private int _debugCycleCount;
 
         private SystemAudioMonitor()
         {
@@ -114,7 +118,7 @@ namespace ChillPatcher.UIFramework.Audio
             _isRunning = true;
             _monitorTask = Task.Run(() => MonitorLoop(_cts.Token));
             
-            _log.LogInfo($"系统音频监控已启动 (检测间隔: {_detectionInterval}秒, 目标音量: {_targetVolume})");
+            _log.LogInfo($"系统音频监控已启动 (检测间隔: {_detectionInterval}秒, 目标音量: {_targetVolume}, 排除进程: [{string.Join(",", _excludedProcessNames)}], PID={_currentProcessId})");
         }
 
         /// <summary>
@@ -185,17 +189,28 @@ namespace ChillPatcher.UIFramework.Audio
                         if (processId == _currentProcessId || processId == 0)
                             continue;
 
+                        // 获取进程名：P/Invoke → GetProcesses fallback → WASAPI session identifier fallback
+                        var procName = GetProcessNameNative((int)processId)
+                                       ?? GetProcessNameFromSession(session);
+                        bool verbose = _debugCycleCount < 10;
+                        if (verbose)
+                            _log.LogInfo($"[AudioDetect] Session: PID={processId}, name={procName ?? "null"}, state={session.State}, sid={GetSessionIdSafe(session)}");
+
                         // 跳过排除列表中的进程
-                        if (_excludedProcessNames.Count > 0 && IsProcessExcluded((int)processId))
+                        if (_excludedProcessNames.Count > 0 && procName != null && _excludedProcessNames.Contains(procName))
+                        {
+                            if (verbose)
+                                _log.LogInfo($"[AudioDetect] EXCLUDED PID={processId} ({procName})");
                             continue;
+                        }
 
                         // 检查会话状态
                         if (session.State == NAudio.CoreAudioApi.Interfaces.AudioSessionState.AudioSessionStateActive)
                         {
-                            // 检查是否真的有声音（峰值电平 > 0）
                             float peakValue = session.AudioMeterInformation.MasterPeakValue;
-                            if (peakValue > _peakThreshold) // 超过检测阈值
+                            if (peakValue > _peakThreshold)
                             {
+                                _log.LogInfo($"[AudioDetect] TRIGGERED by PID={processId} ({procName ?? "null"}), peak={peakValue:F4}");
                                 return true;
                             }
                         }
@@ -206,11 +221,13 @@ namespace ChillPatcher.UIFramework.Audio
                     }
                 }
 
+                _debugCycleCount++;
                 return false;
             }
             catch (Exception ex)
             {
                 _log.LogWarning($"检测音频会话失败: {ex.Message}");
+                _debugCycleCount++;
                 return false;
             }
         }
@@ -228,6 +245,33 @@ namespace ChillPatcher.UIFramework.Audio
             {
                 StartVolumeTransition(1f, _fadeInDuration);
             }
+        }
+
+        /// <summary>
+        /// 从 WASAPI session identifier 中提取可执行文件名（不含扩展名）
+        /// 格式通常为: {0.0.0.00000000}.{guid}|pid|C:\path\to\exe.exe
+        /// </summary>
+        private static string GetProcessNameFromSession(NAudio.CoreAudioApi.AudioSessionControl session)
+        {
+            try
+            {
+                var sid = session.GetSessionIdentifier;
+                if (string.IsNullOrEmpty(sid)) return null;
+                // 取最后一个 | 后的路径
+                int lastPipe = sid.LastIndexOf('|');
+                if (lastPipe < 0 || lastPipe >= sid.Length - 1) return null;
+                var exePath = sid.Substring(lastPipe + 1);
+                if (exePath.IndexOf('\\') >= 0 || exePath.IndexOf('/') >= 0)
+                    return Path.GetFileNameWithoutExtension(exePath);
+                return null;
+            }
+            catch { return null; }
+        }
+
+        private static string GetSessionIdSafe(NAudio.CoreAudioApi.AudioSessionControl session)
+        {
+            try { return session.GetSessionIdentifier ?? "null"; }
+            catch { return "error"; }
         }
 
         /// <summary>
@@ -319,15 +363,58 @@ namespace ChillPatcher.UIFramework.Audio
 
         private bool IsProcessExcluded(int processId)
         {
+            var name = GetProcessNameNative(processId);
+            return name != null && _excludedProcessNames.Contains(name);
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, int dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern bool QueryFullProcessImageName(IntPtr hProcess, int dwFlags, StringBuilder lpExeName, ref int lpdwSize);
+
+        [DllImport("kernel32.dll")]
+        private static extern bool CloseHandle(IntPtr hObject);
+
+        private const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+
+        /// <summary>
+        /// 通过 PROCESS_QUERY_LIMITED_INFORMATION 获取进程名，失败时 fallback 到 GetProcesses 快照
+        /// </summary>
+        private static string GetProcessNameNative(int processId)
+        {
+            // 尝试 P/Invoke（适用于大部分进程）
+            var handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processId);
+            if (handle != IntPtr.Zero)
+            {
+                try
+                {
+                    var sb = new StringBuilder(1024);
+                    int size = sb.Capacity;
+                    if (QueryFullProcessImageName(handle, 0, sb, ref size))
+                        return Path.GetFileNameWithoutExtension(sb.ToString());
+                }
+                finally
+                {
+                    CloseHandle(handle);
+                }
+            }
+
+            // Fallback: GetProcesses 用 NtQuerySystemInformation，不需要打开进程句柄
             try
             {
-                using var process = Process.GetProcessById(processId);
-                return _excludedProcessNames.Contains(process.ProcessName);
+                foreach (var proc in Process.GetProcesses())
+                {
+                    try
+                    {
+                        if (proc.Id == processId)
+                            return proc.ProcessName;
+                    }
+                    finally { proc.Dispose(); }
+                }
             }
-            catch
-            {
-                return false;
-            }
+            catch { }
+            return null;
         }
 
         public void Dispose()
