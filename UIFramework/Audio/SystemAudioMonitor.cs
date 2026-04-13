@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,6 +35,7 @@ namespace ChillPatcher.UIFramework.Audio
         private float _fadeInDuration;
         private float _fadeOutDuration;
         private float _peakThreshold;
+        private HashSet<string> _excludedProcessNames;
 
         // AudioMixer 引用
         private AudioMixer _musicMixer;
@@ -68,6 +70,7 @@ namespace ChillPatcher.UIFramework.Audio
             _fadeInDuration = PluginConfig.AudioResumeFadeInDuration.Value;
             _fadeOutDuration = PluginConfig.AudioMuteFadeOutDuration.Value;
             _peakThreshold = PluginConfig.AudioPeakThreshold.Value;
+            _excludedProcessNames = ParseExcludedProcesses(PluginConfig.AudioExcludedProcesses.Value);
 
             // 获取初始音量
             if (_musicMixer != null && _musicMixer.GetFloat("MusicVolume", out float vol))
@@ -95,6 +98,7 @@ namespace ChillPatcher.UIFramework.Audio
             _fadeInDuration = PluginConfig.AudioResumeFadeInDuration.Value;
             _fadeOutDuration = PluginConfig.AudioMuteFadeOutDuration.Value;
             _peakThreshold = PluginConfig.AudioPeakThreshold.Value;
+            _excludedProcessNames = ParseExcludedProcesses(PluginConfig.AudioExcludedProcesses.Value);
 
             Start();
         }
@@ -179,6 +183,10 @@ namespace ChillPatcher.UIFramework.Audio
                         // 跳过自己的进程
                         uint processId = session.GetProcessID;
                         if (processId == _currentProcessId || processId == 0)
+                            continue;
+
+                        // 跳过排除列表中的进程
+                        if (_excludedProcessNames.Count > 0 && IsProcessExcluded((int)processId))
                             continue;
 
                         // 检查会话状态
@@ -296,6 +304,31 @@ namespace ChillPatcher.UIFramework.Audio
         /// 监控是否正在运行
         /// </summary>
         public bool IsRunning => _isRunning;
+
+        private static HashSet<string> ParseExcludedProcesses(string config)
+        {
+            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (string.IsNullOrWhiteSpace(config)) return set;
+            foreach (var name in config.Split(','))
+            {
+                var trimmed = name.Trim();
+                if (trimmed.Length > 0) set.Add(trimmed);
+            }
+            return set;
+        }
+
+        private bool IsProcessExcluded(int processId)
+        {
+            try
+            {
+                using var process = Process.GetProcessById(processId);
+                return _excludedProcessNames.Contains(process.ProcessName);
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
         public void Dispose()
         {
