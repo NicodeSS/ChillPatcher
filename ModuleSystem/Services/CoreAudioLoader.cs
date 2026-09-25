@@ -80,7 +80,7 @@ namespace ChillPatcher.ModuleSystem.Services
             try
             {
                 var result = await GameAudioInfo.DownloadAudioFile(filePath, CancellationToken.None);
-                return result.Item1;
+                return result.Clip;
             }
             catch (Exception ex)
             {
@@ -317,9 +317,9 @@ namespace ChillPatcher.ModuleSystem.Services
             {
                 var result = await GameAudioInfo.DownloadAudioFile(filePath, CancellationToken.None);
                 
-                var clip = result.Item1;
-                var title = result.Item2;
-                var artist = result.Item3;
+                var clip = result.Clip;
+                var title = result.Title;
+                var artist = result.Credit;
 
                 // 如果没有标题，使用文件名
                 if (string.IsNullOrEmpty(title))

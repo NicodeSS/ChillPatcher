@@ -272,7 +272,7 @@ namespace ChillPatcher.Patches.UIFramework
             instance.LocalPath = filepath;
             
             var result = await GameAudioInfo.DownloadAudioFile(filepath, ct);
-            var clip = result.Item1;
+            var clip = result.Clip;
             
             if (clip == null)
             {
@@ -299,7 +299,7 @@ namespace ChillPatcher.Patches.UIFramework
             else
             {
                 // 如果原来没有标题，使用 DownloadAudioFile 返回的或文件名
-                var downloadedTitle = result.Item2;
+                var downloadedTitle = result.Title;
                 instance.Title = string.IsNullOrEmpty(downloadedTitle) 
                     ? Path.GetFileNameWithoutExtension(filepath) 
                     : downloadedTitle;
