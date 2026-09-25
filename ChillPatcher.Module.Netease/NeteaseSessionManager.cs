@@ -42,10 +42,16 @@ namespace ChillPatcher.Module.Netease
 
         public event Action<SessionState> OnStateChanged;
 
-        public NeteaseSessionManager(NeteaseBridge bridge, ManualLogSource logger)
+        public NeteaseSessionManager(NeteaseBridge bridge, ManualLogSource logger, bool hasLocalSession = false)
         {
             _bridge = bridge;
             _logger = logger;
+
+            if (hasLocalSession)
+            {
+                State = SessionState.LoggedIn;
+                UpdateUserInfo();
+            }
         }
 
         /// <summary>
@@ -55,6 +61,7 @@ namespace ChillPatcher.Module.Netease
         {
             _qrLoginManager = qrLoginManager;
             _qrLoginManager.OnLoginSuccess += OnQRLoginSuccess;
+            _qrLoginManager.OnLoginFailed += NotifyLoginFailed;
         }
 
         #region Public API
@@ -159,9 +166,15 @@ namespace ChillPatcher.Module.Netease
         /// </summary>
         public void TriggerQRLogin()
         {
+            if (_qrLoginManager == null)
+            {
+                _logger.LogError("[NeteaseSession] QRLoginManager not available");
+                return;
+            }
+
             _loginTcs = new TaskCompletionSource<bool>();
             SetState(SessionState.LoggingIn);
-            _qrLoginManager?.StartLoginAsync();
+            _ = _qrLoginManager.StartLoginAsync();
             _logger.LogInfo("[NeteaseSession] QR login triggered");
         }
 
@@ -195,6 +208,7 @@ namespace ChillPatcher.Module.Netease
         public void NotifyLoginFailed(string reason)
         {
             _loginTcs?.TrySetResult(false);
+            SetState(UserInfo == null ? SessionState.LoggedOut : SessionState.Expired);
             _logger.LogWarning($"[NeteaseSession] Login failed: {reason}");
         }
 

@@ -113,8 +113,8 @@ const AccountInfo = ({ state, nickname, avatar, vip }: {
 )
 
 // ---- Login Guide Section ----
-const LoginGuide = ({ status, state }: {
-    status: string; state: string
+const LoginGuide = ({ state, status, qrCodeTexture }: {
+    state: string; status: string; qrCodeTexture: any
 }) => (
     <div style={{
         display: "Flex", flexDirection: "Column", alignItems: "Center",
@@ -124,19 +124,22 @@ const LoginGuide = ({ status, state }: {
             backgroundColor: CARD, borderRadius: 8,
             padding: 16, marginBottom: 8,
         }}>
+            {state === "logging_in" && qrCodeTexture ? (
+                <div style={{
+                    width: 160, height: 160,
+                    backgroundImage: qrCodeTexture,
+                    marginBottom: 10,
+                }} />
+            ) : null}
             <div style={{ fontSize: 12, color: TEXT, unityTextAlign: "MiddleCenter", marginBottom: 6 }}>
-                {state === "expired"
-                    ? "请重启游戏以重新登录"
-                    : status === "等待扫码"
-                    ? "请用网易云 APP 扫描封面区域的二维码"
-                    : "请在播放列表中点击「网易云扫码登录」"}
+                {state === "logging_in"
+                    ? "请用网易云 APP 扫描二维码"
+                    : "点击下方「扫码登录」生成二维码"}
             </div>
             <div style={{ fontSize: 10, color: DIM, unityTextAlign: "MiddleCenter" }}>
-                {state === "expired"
-                    ? "重启后可在播放列表中扫码登录"
-                    : status === "等待扫码"
-                    ? "扫码后在手机上确认登录"
-                    : "二维码将显示在封面区域"}
+                {state === "logging_in"
+                    ? (status || "扫码后在手机上确认登录")
+                    : "也可以播放列表中的「网易云扫码登录」"}
             </div>
         </div>
     </div>
@@ -146,8 +149,6 @@ const LoginGuide = ({ status, state }: {
 const ActionButtons = ({ state }: { state: string }) => {
     const api = getApi()
     if (!api) return null
-
-    const isLoggingIn = state === "logging_in"
 
     switch (state) {
         case "logged_in":
@@ -161,8 +162,13 @@ const ActionButtons = ({ state }: { state: string }) => {
             )
         case "logged_out":
         case "expired":
+            return (
+                <ActionButton text="扫码登录" primary onClick={() => api.login()} />
+            )
         case "logging_in":
-            return null
+            return (
+                <ActionButton text="等待扫码确认" onClick={() => {}} disabled />
+            )
         default:
             return null
     }
@@ -175,6 +181,7 @@ const NeteaseMain = () => {
     const [avatar, setAvatar] = useState("")
     const [vip, setVip] = useState(0)
     const [status, setStatus] = useState("")
+    const [qrCodeTexture, setQrCodeTexture] = useState<any>(null)
 
     // Poll API every 500ms
     useEffect(() => {
@@ -186,6 +193,7 @@ const NeteaseMain = () => {
             setAvatar(api.avatarUrl || "")
             setVip(api.vipType || 0)
             setStatus(api.statusMessage || "")
+            setQrCodeTexture(api.qrCodeTexture || null)
         }
         const timer = setInterval(poll, 500)
         poll()
@@ -218,7 +226,7 @@ const NeteaseMain = () => {
                     {showLogin && (
                         <div>
                             <SectionTitle text="登录" />
-                            <LoginGuide status={status} state={state} />
+                            <LoginGuide state={state} status={status} qrCodeTexture={qrCodeTexture} />
                         </div>
                     )}
 
@@ -240,7 +248,7 @@ __registerPlugin({
     id: "netease",
     title: "网易云音乐",
     width: 280,
-    height: 360,
+    height: 480,
     initialX: 260,
     initialY: 140,
     launcher: {

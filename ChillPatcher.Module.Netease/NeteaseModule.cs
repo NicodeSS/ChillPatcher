@@ -126,49 +126,26 @@ namespace ChillPatcher.Module.Netease
                 return;
             }
 
-            // 信任 cookie 文件，不做额外 API 验证（避免因验证接口问题误删有效 cookie）
+            // 本地用户记录用于确定初始状态，远端校验再决定是否进入扫码登录模式
             _isLoggedIn = _bridge.IsLoggedIn;
+            _sessionManager = new NeteaseSessionManager(_bridge, context.Logger, _isLoggedIn);
+            InitializeQRLoginManager();
             if (!_isLoggedIn)
             {
                 context.Logger.LogWarning($"[{DisplayName}] 未登录网易云音乐，显示二维码登录");
-                
-                // 未登录时只注册收藏 Tag（用于显示登录二维码）
-                RegisterFavoritesTag();
-                
-                // 初始化二维码登录管理器
-                _qrLoginManager = new QRLoginManager(_bridge, context.Logger);
-                _qrLoginManager.OnLoginSuccess += OnQRLoginSuccess;
-                _qrLoginManager.OnStatusChanged += OnQRLoginStatusChanged;
-                _qrLoginManager.OnQRCodeUpdated += OnQRCodeUpdated;
-
-                // 初始化会话管理器（未登录状态，绑定 QR 登录）
-                _sessionManager = new NeteaseSessionManager(_bridge, context.Logger);
-                _sessionManager.SetQRLoginManager(_qrLoginManager);
-
-                // 注册收藏专辑（包含登录歌曲）
-                RegisterLoginSongAlbum();
-                
-                // 注册登录歌曲
-                RegisterLoginSong("请使用网易云 APP 扫码");
-
-                // 监听播放事件：切换到其他歌曲时取消 QR 等待
-                _playStartedSubscription = _context.EventBus.Subscribe<PlayStartedEvent>(OnPlayStartedBeforeLogin);
-
-                // 注册账户 API（未登录模式也需要，供 UI 触发登录）
-                _accountApi = new NeteaseAccountApi(_sessionManager, context.Logger);
-                _accountApi.SetQRLoginManager(_qrLoginManager);
-                RegisterAccountApi();
-
-                _isReady = true;
-                OnReadyStateChanged?.Invoke(_isReady);
-
-                context.Logger.LogInfo($"[{DisplayName}] ✅ 初始化完成（未登录模式）");
+                InitializeLoginMode();
                 return;
             }
 
             // 初始化会话管理器（已登录状态，验证会话并获取 VIP 信息）
-            _sessionManager = new NeteaseSessionManager(_bridge, context.Logger);
-            await _sessionManager.ValidateAndRefreshAsync();
+            var sessionValid = await _sessionManager.ValidateAndRefreshAsync();
+            if (!sessionValid && _sessionManager.State == SessionState.Expired)
+            {
+                _isLoggedIn = false;
+                context.Logger.LogWarning($"[{DisplayName}] 登录已过期，切换到二维码登录模式");
+                InitializeLoginMode();
+                return;
+            }
 
             // 获取用户信息
             var userInfo = _bridge.GetUserInfo();
@@ -216,6 +193,7 @@ namespace ChillPatcher.Module.Netease
             // 注册歌词 API 和账户 API
             RegisterLyricApi();
             _accountApi = new NeteaseAccountApi(_sessionManager, context.Logger);
+            _accountApi.SetQRLoginManager(_qrLoginManager);
             RegisterAccountApi();
 
             _isReady = true;
@@ -661,6 +639,38 @@ namespace ChillPatcher.Module.Netease
         }
 
         private bool IsPersonalFMEnabled => _enablePersonalFM?.Value ?? false;
+
+        private void InitializeQRLoginManager()
+        {
+            _qrLoginManager = new QRLoginManager(_bridge, _context.Logger);
+            _qrLoginManager.OnStatusChanged += OnQRLoginStatusChanged;
+            _qrLoginManager.OnQRCodeUpdated += OnQRCodeUpdated;
+            _sessionManager.SetQRLoginManager(_qrLoginManager);
+        }
+
+        /// <summary>
+        /// 初始化未登录/登录过期模式，只注册二维码登录所需内容。
+        /// </summary>
+        private void InitializeLoginMode()
+        {
+            RegisterFavoritesTag();
+
+            _qrLoginManager.OnLoginSuccess += OnQRLoginSuccess;
+
+            RegisterLoginSongAlbum();
+            RegisterLoginSong("请使用网易云 APP 扫码");
+
+            _playStartedSubscription = _context.EventBus.Subscribe<PlayStartedEvent>(OnPlayStartedBeforeLogin);
+
+            _accountApi = new NeteaseAccountApi(_sessionManager, _context.Logger);
+            _accountApi.SetQRLoginManager(_qrLoginManager);
+            RegisterAccountApi();
+
+            _isReady = true;
+            OnReadyStateChanged?.Invoke(_isReady);
+
+            _context.Logger.LogInfo($"[{DisplayName}] ✅ 初始化完成（扫码登录模式）");
+        }
 
         /// <summary>
         /// 注册收藏 Tag（无论登录与否都需要）
