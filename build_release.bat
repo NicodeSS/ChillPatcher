@@ -52,7 +52,7 @@ mkdir "%PluginDir%\SDK"
 REM ========== Step 1: Build SDK ==========
 echo.
 echo [1/10] Building ChillPatcher.SDK...
-dotnet build ChillPatcher.SDK\ChillPatcher.SDK.csproj -c %Configuration% --no-restore
+dotnet build ChillPatcher.SDK\ChillPatcher.SDK.csproj -c %Configuration%
 if %errorlevel% neq 0 (
     echo ERROR: SDK build failed!
     exit /b 1
@@ -61,7 +61,7 @@ if %errorlevel% neq 0 (
 REM ========== Step 2: Build Main Plugin ==========
 echo.
 echo [2/10] Building ChillPatcher (Main Plugin)...
-dotnet build ChillPatcher.csproj -c %Configuration% --no-restore
+dotnet build ChillPatcher.csproj -c %Configuration%
 if %errorlevel% neq 0 (
     echo ERROR: Main plugin build failed!
     exit /b 1
@@ -70,7 +70,7 @@ if %errorlevel% neq 0 (
 REM ========== Step 3: Build Modules ==========
 echo.
 echo [3/10] Building ChillPatcher.Module.LocalFolder...
-dotnet build ChillPatcher.Module.LocalFolder\ChillPatcher.Module.LocalFolder.csproj -c %Configuration% --no-restore
+dotnet build ChillPatcher.Module.LocalFolder\ChillPatcher.Module.LocalFolder.csproj -c %Configuration%
 if %errorlevel% neq 0 (
     echo ERROR: LocalFolder module build failed!
     exit /b 1
@@ -78,7 +78,7 @@ if %errorlevel% neq 0 (
 
 echo.
 echo [4/10] Building ChillPatcher.Module.Netease...
-dotnet build ChillPatcher.Module.Netease\ChillPatcher.Module.Netease.csproj -c %Configuration% --no-restore
+dotnet build ChillPatcher.Module.Netease\ChillPatcher.Module.Netease.csproj -c %Configuration%
 if %errorlevel% neq 0 (
     echo ERROR: Netease module build failed!
     exit /b 1
@@ -86,7 +86,7 @@ if %errorlevel% neq 0 (
 
 echo.
 echo [5/10] Building ChillPatcher.Module.Bilibili...
-dotnet build ChillPatcher.Module.Bilibili\ChillPatcher.Module.Bilibili.csproj -c %Configuration% --no-restore
+dotnet build ChillPatcher.Module.Bilibili\ChillPatcher.Module.Bilibili.csproj -c %Configuration%
 if %errorlevel% neq 0 (
     echo ERROR: Bilibili module build failed!
     exit /b 1
@@ -94,7 +94,7 @@ if %errorlevel% neq 0 (
 
 echo.
 echo [6/10] Building ChillPatcher.Module.QQMusic...
-dotnet build ChillPatcher.Module.QQMusic\ChillPatcher.Module.QQMusic.csproj -c %Configuration% --no-restore
+dotnet build ChillPatcher.Module.QQMusic\ChillPatcher.Module.QQMusic.csproj -c %Configuration%
 if %errorlevel% neq 0 (
     echo ERROR: QQMusic module build failed!
     exit /b 1
@@ -102,7 +102,7 @@ if %errorlevel% neq 0 (
 
 echo.
 echo [6.5/10] Building ChillPatcher.Module.Spotify...
-dotnet build ChillPatcher.Module.Spotify\ChillPatcher.Module.Spotify.csproj -c %Configuration% --no-restore
+dotnet build ChillPatcher.Module.Spotify\ChillPatcher.Module.Spotify.csproj -c %Configuration%
 if %errorlevel% neq 0 (
     echo ERROR: Spotify module build failed!
     exit /b 1
@@ -111,7 +111,7 @@ if %errorlevel% neq 0 (
 REM ========== Step 7: Build OneJS ==========
 echo.
 echo [7/10] Building ChillPatcher.OneJS...
-dotnet build ChillPatcher.OneJS\ChillPatcher.OneJS.csproj -c %Configuration% --no-restore
+dotnet build ChillPatcher.OneJS\ChillPatcher.OneJS.csproj -c %Configuration%
 if %errorlevel% neq 0 (
     echo ERROR: OneJS build failed!
     exit /b 1
