@@ -65,6 +65,7 @@ namespace ChillPatcher.Module.Netease
         public int vipType => _sessionManager.UserInfo?.VipType ?? 0;
         public string statusMessage => _statusMessage;
         public string qrCodeBase64 => _qrCodeBase64;
+        public Texture2D qrCodeTexture => _qrLoginManager?.QRCodeSprite?.texture;
 
         #endregion
 
